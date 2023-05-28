@@ -1,0 +1,10 @@
+---
+- name: Update facts cache
+  connection: paramiko
+  hosts: mikrotiks
+  gather_facts: False
+
+  tasks:
+    - name: Gather mikrotik facts
+      community.routeros.facts:
+        gather_subset: all

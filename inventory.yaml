@@ -1,0 +1,15 @@
+mikrotiks:
+  hosts:
+    rb4011:
+      ansible_host: 192.168.2.1
+    hex:
+      ansible_host: 192.168.2.11
+    capax:
+      ansible_host: 192.168.2.3
+    hapax3:
+      ansible_host: 192.168.2.2
+  vars:
+    ansible_network_os: community.routeros.routeros
+    ansible_connection: ansible.netcommon.network_cli
+    ansible_user: joerg
+    ansible_ssh_private_key_file: ~/.ssh/privat

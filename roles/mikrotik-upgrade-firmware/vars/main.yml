@@ -1,0 +1,3 @@
+---
+# vars file for mikrotik-base-setup
+mikrotik_channel: stable

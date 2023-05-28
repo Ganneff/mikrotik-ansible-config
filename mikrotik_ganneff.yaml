@@ -1,0 +1,7 @@
+---
+- hosts: mikrotiks
+  connection: paramiko
+  gather_facts: false
+  roles:
+    - mikrotik-base
+    - mikrotik-firewall

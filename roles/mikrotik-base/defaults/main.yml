@@ -1,0 +1,6 @@
+---
+# defaults file for roles/mikrotik-base
+routeros_timezone: "Europe/Berlin"
+routeros_secure_address: 192.168.2.0/24
+ntp_client_ip1: ntp.ganneff.de
+ntp_client_ip2: ntp2.ganneff.de

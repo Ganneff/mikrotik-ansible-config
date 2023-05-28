@@ -1,0 +1,98 @@
+---
+# tasks file for mikrotik-base-setup
+- name: find routeros firmware channel
+  community.routeros.command:
+    commands:
+      /system package update print
+  register: updatechannel
+
+- name: Get Channel name
+  set_fact:
+    cachable: yes
+    channel: "{{ item | replace('channel: ', '') | trim }}"
+  when: "'channel:' in item"
+  loop: "{{ updatechannel.stdout_lines[0] }}"
+
+- name: Get Channel update status
+  set_fact:
+    cachable: yes
+    update_status: "{{ item | replace('status: ', '') | trim }}"
+  when: "'status:' in item"
+  loop: "{{ updatechannel.stdout_lines[0] }}"
+
+- name: Grrr, variable must be defined
+  set_fact:
+    cachable: yes
+    update_status: "No upgrades"
+  when: update_status is undefined
+
+- debug:
+    var: channel
+- debug:
+    var: update_status
+
+- name: set routeros firmware channel
+  community.routeros.command:
+    commands:
+      - /system package update set channel={{ mikrotik_channel }}
+  when: channel != mikrotik_channel
+
+- name: upgrade packages and reboot
+  throttle: 1
+  routeros_command:
+    commands:
+      - /system package update install
+  when: update_status == "New version is available"
+
+- name: Wait for the reboot and reconnect
+  wait_for:
+    port: 22
+    host: '{{ (ansible_ssh_host|default(ansible_host))|default(inventory_hostname) }}'
+    search_regex: ROSSH
+    delay: 10
+    timeout: 60
+  connection: local
+  when: update_status == "New version is available"
+
+- name: Get Firmware
+  routeros_command:
+    commands: /system routerboard print
+  register: routerboard
+
+- name: Get Upgrade Firmware Line
+  set_fact:
+    upgrade: "{{ item | replace('upgrade-firmware: ', '') | trim }}"
+  when: "'upgrade-firmware:' in item"
+  loop: "{{ routerboard.stdout_lines[0] }}"
+
+- name: Get Current Firmware Line
+  set_fact:
+    current: "{{ item | replace('current-firmware: ', '') | trim }}"
+  when: "'current-firmware:' in item"
+  loop: "{{ routerboard.stdout_lines[0] }}"
+
+- debug:
+    var: upgrade
+- debug:
+    var: current
+
+- name: Upgrade RB firmware if needed
+  routeros_command:
+    commands: ":execute {/system routerboard upgrade;delay 1;quit}"
+  when: current is version_compare(upgrade, '<')
+
+- name: Reboot the router
+  throttle: 1
+  routeros_command:
+    commands: ":execute {/system reboot;delay 1;quit}"
+  when: current is version_compare(upgrade, '<')
+
+- name: Wait for the reboot and reconnect
+  wait_for:
+    port: 22
+    host: '{{ (ansible_ssh_host|default(ansible_host))|default(inventory_hostname) }}'
+    search_regex: ROSSH
+    delay: 10
+    timeout: 60
+  connection: local
+  when: current is version_compare(upgrade, '<')

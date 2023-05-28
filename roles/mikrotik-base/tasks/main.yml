@@ -1,0 +1,66 @@
+---
+# tasks file for roles/mikrotik-base
+- name: "Disable sensitive services"
+  routeros_command:
+    commands: /ip service disable {{ item }}
+  with_items:
+   - telnet
+   - ftp
+   - www
+   - api
+   - api-ssl
+  tags: [ "install" ]
+
+- name: "Disable mac-telnet services"
+  routeros_command:
+    commands:
+      - /tool mac-server set allowed-interface-list=none
+      - /tool mac-server mac-winbox set allowed-interface-list=none
+      - /tool mac-server ping set enabled=no
+  tags: [ "install" ]
+
+- name: Setup timezone
+  routeros_command:
+    commands: /system clock set time-zone-autodetect=no time-zone-name={{ routeros_timezone }}
+  tags: [ "install" ]
+
+- name: "Disable bandwidth test server"
+  routeros_command:
+    commands: /tool bandwidth-server set enabled=no
+  tags: [ "install" ]
+
+- name: "SSH strong keys"
+  routeros_command:
+    commands: /ip ssh set strong-crypto=yes
+  tags: [ "install" ]
+
+- name: "bind ip for winbox"
+  routeros_command:
+    commands: /ip service set winbox address={{ routeros_secure_address }}
+  tags: [ "install" ]
+
+- name: set ntp client
+  routeros_command:
+    commands:
+      - "/system ntp client set enabled=yes primary-ntp={{ ntp_client_ip1 }} secondary-ntp={{ ntp_client_ip2 }}"
+  tags: [ "install" ]
+
+- name: disable caching proxy
+  routeros_command:
+    commands: /ip proxy set enabled=no
+  tags: [ "install" ]
+
+- name: disable caching proxy
+  routeros_command:
+    commands: /ip socks set enabled=no
+  tags: [ "install" ]
+
+- name: disable upnp
+  routeros_command:
+    commands: /ip upnp set enabled=no
+  tags: [ "install" ]
+
+- name: disable cloud
+  routeros_command:
+    commands: /ip cloud set ddns-enabled=no update-time=no
+  tags: [ "install" ]
